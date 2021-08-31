@@ -1,0 +1,42 @@
+{
+  "name": "2ics",
+  "version": "1.0.0",
+  "description": "Creates iCal agendas from other sources",
+  "bin": {
+    "2ics": "bin/index.js"
+  },
+  "scripts": {
+    "lint": "eslint '**/*.js'",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quilicicf/2ics.git"
+  },
+  "keywords": [
+    "ical",
+    "ics",
+    "calendar",
+    "icalendar",
+    "csv"
+  ],
+  "author": "quilicicf <quilicicf@gmail.com> (https://github.com/quilicicf)",
+  "license": "ASL 2.0",
+  "bugs": {
+    "url": "https://github.com/quilicicf/2ics/issues"
+  },
+  "homepage": "https://github.com/quilicicf/2ics",
+  "dependencies": {
+    "snyk": "^1.683.0"
+  },
+  "devDependencies": {
+    "@talend/eslint-config": "3.0.0",
+    "eslint": "7.32.0",
+    "eslint-config-airbnb": "18.2.1",
+    "eslint-plugin-import": "2.24.0",
+    "eslint-plugin-jsx-a11y": "6.4.1",
+    "eslint-plugin-react": "7.24.0"
+  },
+  "snyk": true
+}
