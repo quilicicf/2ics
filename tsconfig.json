@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "allowJs": true,
+    "checkJs": true,
+    "allowSyntheticDefaultImports": true,
+
+    "outDir": "./bin",
+    "newLine": "lf",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true
+  },
+  "exclude": [
+    "./bin/**/*"
+  ]
+}
