@@ -1,37 +1,21 @@
 import yargs from 'yargs';
 import chalk from 'chalk';
 import { existsSync, readFileSync, statSync } from 'fs';
-import { ffvbRecipe } from './recipes/ffvb.js';
+import { ALL_INGESTERS } from './ingester/ingester.js';
+import { ALL_PREPARATIONS } from './preparations/preparation.js';
+import { cook } from './cook.js';
 const { red } = chalk;
-const ALL_RECIPES = {
-    [ffvbRecipe.id]: ffvbRecipe,
-};
 const [, bin, ...args] = process.argv;
-yargs(args)
-    .usage(`${bin} --input /tmp/source.csv --recipe ffvb`)
-    .option('input', {
+// @ts-ignore TODO: can it be done better with Yargs API?
+const rawOptions = yargs(args)
+    .usage(`${bin} --ingester CSV --preparations FIELD_COMPOSITION --output /tmp/output.ics /tmp/input.csv`)
+    .option('ingester', {
     alias: 'i',
     type: 'string',
-    description: 'The input file',
+    description: 'The ingester that will read the source file and generate JS objects',
+    choices: Object.keys(ALL_INGESTERS),
     requiresArg: true,
     demandOption: true,
-    coerce(filePath) {
-        if (!existsSync(filePath)) {
-            throw Error(red(`The input file was not found`));
-        }
-        return readFileSync(filePath, 'utf8');
-    },
-})
-    .option('recipe', {
-    alias: 'r',
-    type: 'string',
-    description: 'The recipe to cook',
-    choices: Object.keys(ALL_RECIPES),
-    requiresArg: true,
-    demandOption: true,
-    // coerce (recipeId: string): Recipe {
-    //   return ALL_RECIPES[ recipeId ];
-    // },
 })
     .option('output', {
     alias: 'o',
@@ -46,5 +30,55 @@ yargs(args)
         return filePath;
     },
 })
+    .option('source', {
+    alias: 's',
+    type: 'string',
+    description: 'The source file',
+    requiresArg: true,
+    demandOption: true,
+    coerce(filePath) {
+        if (!existsSync(filePath)) {
+            throw Error(red(`The source file was not found`));
+        }
+        return readFileSync(filePath, 'utf8');
+    },
+})
+    .option('preparations', {
+    alias: 'p',
+    type: 'string',
+    array: true,
+    description: 'The preparations to run',
+    choices: Object.keys(ALL_PREPARATIONS),
+    requiresArg: true,
+    demandOption: false,
+})
+    .option('recipe', {
+    alias: 'r',
+    type: 'string',
+    description: 'The path to a recipe',
+    requiresArg: true,
+    demandOption: false,
+    conflicts: 'preparations',
+    coerce(filePath) {
+        if (!filePath) {
+            return undefined;
+        }
+        if (!existsSync(filePath)) {
+            throw Error(red(`Could not find the recipe`));
+        }
+        return readFileSync(filePath, 'utf8');
+    },
+})
     .help()
     .argv;
+const options = {
+    source: rawOptions.source,
+    outputPath: rawOptions.output,
+    ingester: ALL_INGESTERS[rawOptions.ingester],
+    preparations: rawOptions.preparations
+        ? rawOptions.preparations.map(id => ALL_PREPARATIONS[id])
+        : undefined,
+    recipe: rawOptions.recipe ? JSON.parse(rawOptions.recipe) : undefined,
+};
+cook(options)
+    .catch(error => process.stderr.write(`Error while cooking:\n${error.stack}\n`));
