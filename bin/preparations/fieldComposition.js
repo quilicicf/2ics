@@ -6,6 +6,29 @@ function resolvePattern(record, pattern) {
         return currentValue.replaceAll(`%{${key}}`, record[key]);
     }, pattern);
 }
+async function promptComposedFieldName(fields) {
+    // @ts-ignore
+    const { composedFieldName } = await prompt({
+        type: 'input',
+        name: 'composedFieldName',
+        message: 'Please provide the name of the future composed field',
+        validate(value) {
+            return fields.includes(value)
+                ? `The composed field cannot be part of the existing fields: ${fields.join(', ')}`
+                : true;
+        },
+    });
+    return composedFieldName;
+}
+async function promptPattern() {
+    // @ts-ignore
+    const { pattern } = await prompt({
+        type: 'input',
+        name: 'pattern',
+        message: 'Please provide the pattern. Use record fields like this: %{fieldName}',
+    });
+    return pattern;
+}
 export const fieldCompositionPreparation = {
     id: 'COMPOSITION',
     displayName: 'Compose a new field from other fields',
@@ -16,29 +39,11 @@ export const fieldCompositionPreparation = {
         return options;
     },
     async init(initialOptions, fields) {
-        const optionsUpdater = await prompt([
-            {
-                type: 'input',
-                name: 'composedFieldName',
-                skip: !!initialOptions.composedFieldName,
-                message: 'Please provide the name of the future composed field',
-                validate(value) {
-                    return fields.includes(value)
-                        ? `The composed field cannot be part of the existing fields: ${fields.join(', ')}`
-                        : true;
-                },
-            },
-            {
-                type: 'input',
-                name: 'pattern',
-                skip: !!initialOptions.pattern,
-                message: 'Please provide the pattern. Use record fields like this: %{fieldName}',
-            },
-        ]);
-        const newOptions = { ...initialOptions, ...optionsUpdater };
+        const composedFieldName = initialOptions.composedFieldName || await promptComposedFieldName(fields);
+        const pattern = initialOptions.pattern || await promptPattern();
         return {
-            fields: [...fields, newOptions.composedFieldName],
-            options: newOptions,
+            fields: [...fields, composedFieldName],
+            options: { composedFieldName, pattern },
         };
     },
     cook(records, options) {

@@ -18,6 +18,31 @@ function resolvePattern (record: Record<string, any>, pattern: string): string {
     );
 }
 
+async function promptComposedFieldName (fields: string[]): Promise<string> {
+  // @ts-ignore
+  const { composedFieldName } = await prompt({
+    type: 'input',
+    name: 'composedFieldName',
+    message: 'Please provide the name of the future composed field',
+    validate (value: string): boolean | string {
+      return fields.includes(value)
+        ? `The composed field cannot be part of the existing fields: ${fields.join(', ')}`
+        : true;
+    },
+  });
+  return composedFieldName;
+}
+
+async function promptPattern (): Promise<string> {
+  // @ts-ignore
+  const { pattern } = await prompt({
+    type: 'input',
+    name: 'pattern',
+    message: 'Please provide the pattern. Use record fields like this: %{fieldName}',
+  });
+  return pattern;
+}
+
 export const fieldCompositionPreparation: Preparation<FieldCompositionOptions> = {
   id: 'COMPOSITION',
   displayName: 'Compose a new field from other fields',
@@ -28,30 +53,12 @@ export const fieldCompositionPreparation: Preparation<FieldCompositionOptions> =
     return options as FieldCompositionOptions;
   },
   async init (initialOptions: Partial<FieldCompositionOptions>, fields: string[]): Promise<PreparationInitResult<FieldCompositionOptions>> {
-    const optionsUpdater: FieldCompositionOptions = await prompt([
-      {
-        type: 'input',
-        name: 'composedFieldName',
-        skip: !!initialOptions.composedFieldName,
-        message: 'Please provide the name of the future composed field',
-        validate (value: string): boolean | string {
-          return fields.includes(value)
-            ? `The composed field cannot be part of the existing fields: ${fields.join(', ')}`
-            : true;
-        },
-      },
-      {
-        type: 'input',
-        name: 'pattern',
-        skip: !!initialOptions.pattern,
-        message: 'Please provide the pattern. Use record fields like this: %{fieldName}',
-      },
-    ]);
+    const composedFieldName: string = initialOptions.composedFieldName || await promptComposedFieldName(fields);
+    const pattern: string = initialOptions.pattern || await promptPattern();
 
-    const newOptions = { ...initialOptions, ...optionsUpdater };
     return {
-      fields: [ ...fields, newOptions.composedFieldName ],
-      options: newOptions,
+      fields: [ ...fields, composedFieldName ],
+      options: { composedFieldName, pattern },
     };
   },
   cook (records: Record<string, any>[], options: FieldCompositionOptions): Record<string, any>[] {
