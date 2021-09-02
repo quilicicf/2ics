@@ -3,9 +3,7 @@ import { Preparation, PreparationInitResult } from './preparation.js';
 
 const { prompt } = enquirer;
 
-const TZ = Intl.DateTimeFormat()
-  .resolvedOptions()
-  .timeZone;
+const SKIP_VALUE = 'SKIP_THIS_FIELD';
 
 export interface ToIcalOptions {
   summary: string;
@@ -14,9 +12,6 @@ export interface ToIcalOptions {
 
   location: string;
   description: string;
-
-  organizer: string;
-  attendees: string;
 }
 
 interface Choice {
@@ -32,10 +27,19 @@ function mapToIcal (record: Record<string, any>, options: ToIcalOptions): Record
 
     location: options.location ? record[ options.location ] : undefined,
     description: options.description ? record[ options.description ] : undefined,
-
-    organizer: options.organizer ? record[ options.organizer ] : undefined,
-    attendees: options.attendees ? record[ options.attendees ] : undefined,
   };
+}
+
+async function promptField (fieldName: string, choices: Choice[]): Promise<string> {
+  // @ts-ignore
+  const { result } = await prompt({
+    type: 'select',
+    name: 'result',
+    message: `In which field is the ${fieldName} of the event?`,
+    choices,
+  });
+
+  return result;
 }
 
 export const toIcalPreparation: Preparation<ToIcalOptions> = {
@@ -50,48 +54,18 @@ export const toIcalPreparation: Preparation<ToIcalOptions> = {
   async init (initialOptions: Partial<ToIcalOptions>, fields: string[]): Promise<PreparationInitResult<ToIcalOptions>> {
     const mandatoryFieldChoices: Choice[] = fields.map(field => ({ name: field, value: field }));
     const optionalFieldChoices: Choice[] = [
-      { name: 'Skip this field', value: undefined },
+      { name: 'Skip this field', value: SKIP_VALUE },
       ...mandatoryFieldChoices,
     ];
-    const optionsUpdater: ToIcalOptions = await prompt([
-      {
-        type: 'select',
-        name: 'summary',
-        skip: !!initialOptions.summary,
-        message: 'In which field is the summary of the event?',
-        choices: mandatoryFieldChoices,
-      },
-      {
-        type: 'select',
-        name: 'dtstart',
-        skip: !!initialOptions.dtstart,
-        message: 'In which field is the start date of the event?',
-        choices: mandatoryFieldChoices,
-      },
-      {
-        type: 'select',
-        name: 'dtend',
-        skip: !!initialOptions.dtend,
-        message: 'In which field is the end date of the event?',
-        choices: mandatoryFieldChoices,
-      },
-      {
-        type: 'select',
-        name: 'location',
-        skip: !!initialOptions.location,
-        message: 'In which field is the location of the event?',
-        choices: optionalFieldChoices,
-      },
-      {
-        type: 'select',
-        name: 'description',
-        skip: !!initialOptions.description,
-        message: 'In which field is the description of the event?',
-        choices: optionalFieldChoices,
-      },
-    ]);
 
-    return { fields, options: { ...initialOptions, ...optionsUpdater } };
+    const summary: string = initialOptions.summary || await promptField('summary', mandatoryFieldChoices);
+    const dtstart: string = initialOptions.dtstart || await promptField('dtstart', mandatoryFieldChoices);
+    const dtend: string = initialOptions.dtend || await promptField('dtend', mandatoryFieldChoices);
+
+    const location: string = initialOptions.location || await promptField('location', optionalFieldChoices);
+    const description: string = initialOptions.description || await promptField('description', optionalFieldChoices);
+
+    return { fields, options: { summary, dtstart, dtend, location, description } };
   },
   cook (records: Record<string, any>[], options: ToIcalOptions): Record<string, any>[] {
     return records.map(record => mapToIcal(record, options));

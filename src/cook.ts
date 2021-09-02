@@ -1,5 +1,9 @@
+import { writeFileSync } from 'fs';
+
 import { Ingester, IngestionResult } from './ingester/ingester.js';
 import { ALL_PREPARATIONS, Preparation, PreparationInitResult } from './preparations/preparation.js';
+import { toIcalPreparation } from './preparations/toIcal.js';
+import { jsToIcs } from './jsToIcs.js';
 
 interface PreparationConfiguration {
   id: string;
@@ -74,8 +78,15 @@ export async function cook (options: CliOptions): Promise<void> {
   const ingestionResult: IngestionResult = await ingester.ingest(source, ingesterOptions);
 
   const result: Diner = !!preparations
-    ? await cookPreparations(ingestionResult, preparations)
+    ? await cookPreparations(ingestionResult, [ ...preparations, ALL_PREPARATIONS[ toIcalPreparation.id ] ])
     : await cookRecipe(ingestionResult, recipe || []);
 
-  process.stdout.write(`Final records: ${JSON.stringify(result)}\n`);
+  const icalendar: string = jsToIcs(result.records);
+
+  if (outputPath) {
+    writeFileSync(outputPath, icalendar);
+  } else {
+    process.stdout.write(icalendar);
+  }
+  process.stdout.write(`Recipe:\n${JSON.stringify(result.recipe, null, 2)}\n`);
 }
