@@ -5,9 +5,9 @@ export interface IngestionResult {
   records: Record<string, any>[];
 }
 
-export interface Ingester<O extends object> {
+export interface Ingester<O extends Record<string, any>> {
   id: string;
-  init: (options: O) => Promise<O>;
+  init: (options: Partial<O>) => Promise<O>;
   ingest: (source: string, options: O) => Promise<IngestionResult>;
 }
 

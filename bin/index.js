@@ -2,10 +2,10 @@ import yargs from 'yargs';
 import chalk from 'chalk';
 import { existsSync, readFileSync, statSync } from 'fs';
 import { ALL_INGESTERS } from './ingester/ingester.js';
-import { ALL_PREPARATIONS } from './preparations/preparation.js';
 import { cook } from './cook.js';
 const { red } = chalk;
 const [, bin, ...args] = process.argv;
+const USE_RECIPE_OPTION = 'use-recipe';
 // @ts-ignore TODO: can it be done better with Yargs API?
 const rawOptions = yargs(args)
     .usage(`${bin} --ingester CSV --preparations FIELD_COMPOSITION --output /tmp/output.ics /tmp/input.csv`)
@@ -43,16 +43,7 @@ const rawOptions = yargs(args)
         return readFileSync(filePath, 'utf8');
     },
 })
-    .option('preparations', {
-    alias: 'p',
-    type: 'string',
-    array: true,
-    description: 'The preparations to run',
-    choices: Object.keys(ALL_PREPARATIONS),
-    requiresArg: true,
-    demandOption: false,
-})
-    .option('recipe', {
+    .option(USE_RECIPE_OPTION, {
     alias: 'r',
     type: 'string',
     description: 'The path to a recipe',
@@ -69,16 +60,31 @@ const rawOptions = yargs(args)
         return readFileSync(filePath, 'utf8');
     },
 })
+    .option('write-recipe', {
+    alias: 'w',
+    type: 'string',
+    description: `Write the recipe to the given path to reproduce it with --${USE_RECIPE_OPTION} later`,
+    requiresArg: true,
+    demandOption: false,
+    conflicts: USE_RECIPE_OPTION,
+    coerce(filePath) {
+        if (!filePath) {
+            return undefined;
+        }
+        if (existsSync(filePath) && statSync(filePath).isDirectory()) {
+            throw Error(red(`Cannot write the recipe, ${filePath} is a directory`));
+        }
+        return filePath;
+    },
+})
     .help()
     .argv;
 const options = {
     source: rawOptions.source,
     outputPath: rawOptions.output,
     ingester: ALL_INGESTERS[rawOptions.ingester],
-    preparations: rawOptions.preparations
-        ? rawOptions.preparations.map(id => ALL_PREPARATIONS[id])
-        : undefined,
-    recipe: rawOptions.recipe ? JSON.parse(rawOptions.recipe) : undefined,
+    recipe: rawOptions.useRecipe ? JSON.parse(rawOptions.useRecipe) : undefined,
+    recipeOutputPath: rawOptions.writeRecipe,
 };
 cook(options)
     .catch(error => process.stderr.write(`Error while cooking:\n${error.stack}\n`));

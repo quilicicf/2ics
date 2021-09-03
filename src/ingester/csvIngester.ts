@@ -36,6 +36,8 @@ export const csvIngester: Ingester<CsvIngesterOptions> = {
       columns: true,
       columns_duplicates_to_array: true,
 
+      ignore_last_delimiters: true,
+
       skip_empty_lines: true,
     });
 
