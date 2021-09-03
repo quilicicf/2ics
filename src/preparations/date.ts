@@ -21,7 +21,7 @@ function parseDate (record: Record<string, any>, options: ParseDateOptions): Rec
 async function promptField (fields: string[]): Promise<string> {
   // @ts-ignore
   const { field } = await prompt({
-    type: 'select',
+    type: 'autocomplete',
     name: 'field',
     message: 'Please provide the name of the field with the date inside',
     choices: [ ...fields ],
@@ -31,12 +31,12 @@ async function promptField (fields: string[]): Promise<string> {
 
 async function promptFormat (): Promise<string> {
   // @ts-ignore
-  const { field } = await prompt({
+  const { format } = await prompt({
     type: 'input',
     name: 'format',
     message: 'Please provide the date format',
   });
-  return field;
+  return format;
 }
 
 export const parseDatePreparation: Preparation<ParseDateOptions> = {
@@ -86,7 +86,7 @@ async function promptNewField (fields: string[]): Promise<string> {
 async function promptUnit (): Promise<TimeUnit> {
   // @ts-ignore
   const { unit } = await prompt({
-    type: 'select',
+    type: 'autocomplete',
     name: 'unit',
     message: 'Please provide the time unit',
     choices: [ 'DAYS', 'HOURS', 'MINUTES' ],
@@ -97,7 +97,7 @@ async function promptUnit (): Promise<TimeUnit> {
 async function promptAmount (): Promise<number> {
   // @ts-ignore
   const { amount } = await prompt({
-    type: 'number',
+    type: 'numeral',
     name: 'amount',
     message: 'Please provide the time amount',
     required: true,
@@ -145,7 +145,10 @@ export const addTimePreparation: Preparation<AddTimeOptions> = {
     const unit: TimeUnit = initialOptions.unit || await promptUnit();
     const amount: number = initialOptions.amount || await promptAmount();
 
-    return { fields, options: { field, newField, unit, amount } };
+    return {
+      fields: [ ...fields, newField ],
+      options: { field, newField, unit, amount },
+    };
   },
   cook (records: Record<string, any>[], options: AddTimeOptions): Record<string, any>[] {
     return records.map(record => addTimeToRecord(record, options));

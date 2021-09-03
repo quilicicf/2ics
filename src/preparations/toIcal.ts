@@ -33,7 +33,7 @@ function mapToIcal (record: Record<string, any>, options: ToIcalOptions): Record
 async function promptField (fieldName: string, choices: Choice[]): Promise<string> {
   // @ts-ignore
   const { result } = await prompt({
-    type: 'select',
+    type: 'autocomplete',
     name: 'result',
     message: `In which field is the ${fieldName} of the event?`,
     choices,

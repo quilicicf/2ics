@@ -21,12 +21,12 @@ async function promptField(fields) {
 }
 async function promptFormat() {
     // @ts-ignore
-    const { field } = await prompt({
+    const { format } = await prompt({
         type: 'input',
         name: 'format',
         message: 'Please provide the date format',
     });
-    return field;
+    return format;
 }
 export const parseDatePreparation = {
     id: 'PARSE_DATE',
@@ -73,7 +73,7 @@ async function promptUnit() {
 async function promptAmount() {
     // @ts-ignore
     const { amount } = await prompt({
-        type: 'number',
+        type: 'numeral',
         name: 'amount',
         message: 'Please provide the time amount',
         required: true,
@@ -117,7 +117,10 @@ export const addTimePreparation = {
         const newField = initialOptions.newField || await promptNewField(fields);
         const unit = initialOptions.unit || await promptUnit();
         const amount = initialOptions.amount || await promptAmount();
-        return { fields, options: { field, newField, unit, amount } };
+        return {
+            fields: [...fields, newField],
+            options: { field, newField, unit, amount },
+        };
     },
     cook(records, options) {
         return records.map(record => addTimeToRecord(record, options));
