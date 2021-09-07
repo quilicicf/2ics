@@ -45,6 +45,7 @@ async function promptField (fieldName: string, choices: Choice[]): Promise<strin
 export const toIcalPreparation: Preparation<ToIcalOptions> = {
   id: 'ICAL',
   displayName: 'Map the fields to the expected ical fields',
+  startMessage: 'Cooking preparation: map to ical fields',
   serializeOptions (options: ToIcalOptions): Record<string, any> {
     return options;
   },

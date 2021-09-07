@@ -66,6 +66,7 @@ function deserializeOptions (options: Record<string, any>): FilterOptions {
 export const filterPreparation: Preparation<FilterOptions> = {
   id: 'FILTER',
   displayName: 'Filter records, records that match the filter will be included',
+  startMessage: 'Cooking preparation: filter',
   serializeOptions,
   deserializeOptions,
   init,
@@ -77,6 +78,7 @@ export const filterPreparation: Preparation<FilterOptions> = {
 export const invertedFilterPreparation: Preparation<FilterOptions> = {
   id: 'INVERTED_FILTER',
   displayName: 'Filter records, records that match the filter will be excluded',
+  startMessage: 'Cooking preparation: inverted filter',
   serializeOptions,
   deserializeOptions,
   init,

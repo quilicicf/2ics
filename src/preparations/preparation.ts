@@ -3,14 +3,15 @@ import { fieldCompositionPreparation } from './fieldComposition.js';
 import { filterPreparation, invertedFilterPreparation } from './filter.js';
 import { toIcalPreparation } from './toIcal.js';
 
-export interface PreparationInitResult<O extends object> {
+export interface PreparationInitResult<O extends Record<string, any>> {
   fields: string[];
   options: O;
 }
 
-export interface Preparation<O extends object> {
+export interface Preparation<O extends Record<string, any>> {
   id: string;
   displayName: string;
+  startMessage: string,
   serializeOptions: (options: O) => Record<string, any>;
   deserializeOptions: (options: Record<string, any>) => O;
   init: (options: O, fields: string[]) => Promise<PreparationInitResult<O>>;

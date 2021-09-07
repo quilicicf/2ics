@@ -42,6 +42,7 @@ async function promptFormat (): Promise<string> {
 export const parseDatePreparation: Preparation<ParseDateOptions> = {
   id: 'PARSE_DATE',
   displayName: 'Parse the date in a field',
+  startMessage: 'Cooking preparation: parse date',
   serializeOptions (options: ParseDateOptions): Record<string, any> {
     return options;
   },
@@ -133,6 +134,7 @@ function addTimeToRecord (record: Record<string, any>, options: AddTimeOptions):
 export const addTimePreparation: Preparation<AddTimeOptions> = {
   id: 'ADD_TIME',
   displayName: 'Add time to a parsed date',
+  startMessage: 'Cooking preparation: add time to parsed date',
   serializeOptions (options: AddTimeOptions): Record<string, any> {
     return options;
   },
