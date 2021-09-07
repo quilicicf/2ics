@@ -3,13 +3,15 @@
   "version": "1.0.0",
   "description": "Creates iCal agendas from other sources",
   "bin": {
-    "2ics": "bin/index.js"
+    "2ics": "bin/2ics.js"
   },
   "scripts": {
     "lint": "eslint '**/*.js'",
     "snyk-protect": "snyk-protect",
     "prepare": "npm run snyk-protect",
-    "test": "snyk test"
+    "preinstall": "tsc",
+    "build": "tsc",
+    "watch": "tsc --watch"
   },
   "repository": {
     "type": "git",

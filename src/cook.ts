@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { tmpdir } from 'os';
 import { resolve } from 'path';
 import enquirer from 'enquirer';
@@ -8,8 +9,9 @@ import { jsToIcs } from './jsToIcs.js';
 import { toIcalPreparation } from './preparations/toIcal.js';
 import { ALL_INGESTERS, Ingester, IngestionResult } from './ingester/ingester.js';
 import { ALL_PREPARATIONS, Preparation, PreparationInitResult } from './preparations/preparation.js';
-import { csvIngester, CsvIngesterOptions } from './ingester/csvIngester.js';
+import { csvIngester } from './ingester/csvIngester.js';
 
+const { cyan } = chalk;
 const { prompt } = enquirer;
 
 const TEMPORARY_DINER = resolve(tmpdir(), 'temp_diner.json');
@@ -58,6 +60,7 @@ const PREPARATION_CHOICES: Choice[] = [
 async function cookPreparation (diner: Diner, preparation: Preparation<any>, initialOptions: any = {}): Promise<Diner> {
   const { fields: newFields, options: preparationOptions }: PreparationInitResult<any>
     = await preparation.init(initialOptions, diner.fields);
+  process.stdout.write(`${cyan(preparation.startMessage)}\n`);
   const newRecords = preparation.cook(diner.records, preparationOptions);
   return {
     fields: newFields,
@@ -91,6 +94,19 @@ async function cookRecursive (diner: Diner): Promise<Diner> {
   }
 }
 
+async function promptIngester (): Promise<Ingester<any>> {
+  // @ts-ignore
+  const { ingesterId } = await prompt({
+    type: 'autocomplete',
+    name: 'ingesterId',
+    message: 'Choose the ingester',
+    choices: Object.values(ALL_INGESTERS)
+      .map(({ id, displayName }) => ({ name: id, message: displayName })),
+  });
+
+  return ALL_INGESTERS[ ingesterId ];
+}
+
 async function cookUnprepared (source: string): Promise<Diner> {
   process.stdout.write(`I'll help you cook your source file\n`);
   process.stdout.write(`Choose preparations to update your source and have at least the following fields:\n`);
@@ -100,8 +116,9 @@ async function cookUnprepared (source: string): Promise<Diner> {
   process.stdout.write(`Then finish preparing and I'll help you map your fields to Ical fields at the end\n\n`);
   process.stdout.write(`The state of your diner will be updated after each preparation in file: ${TEMPORARY_DINER}\n`);
 
-  const ingester: Ingester<CsvIngesterOptions> = csvIngester;
-  const ingesterOptions: CsvIngesterOptions = await ingester.init({}); // TODO: implement other ingesters and prompt user
+  const ingester: Ingester<any> = await promptIngester();
+  const ingesterOptions: any = await ingester.init({});
+  process.stdout.write(`${cyan(ingester.startMessage)}\n`);
   const ingestionResult = await ingester.ingest(source, ingesterOptions);
 
   writeFileSync(TEMPORARY_DINER, JSON.stringify(ingestionResult.records, null, 2), 'utf8');
@@ -147,7 +164,7 @@ async function cookPreparations (source: string,
 
   const ingester: Ingester<any> = ALL_INGESTERS[ recipe.ingester.id ];
   const ingesterOptions = recipe.ingester.options || await ingester.init({});
-  // @ts-ignore
+  process.stdout.write(`${cyan(ingester.startMessage)}\n`);
   const ingestionResult: IngestionResult = await ingester.ingest(source, ingesterOptions);
 
   return preparations

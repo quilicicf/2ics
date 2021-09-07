@@ -1,3 +1,9 @@
+# Ignore the built files, they are built at installation
+/bin/*
+# The bin/index.js file is the only one that's committed since it must be executable
+# and start with a shebang. Can't do that with tsc.
+!/bin/2ics.js
+
 # Logs
 logs
 *.log

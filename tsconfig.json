@@ -10,7 +10,8 @@
     "outDir": "./bin",
     "newLine": "lf",
     "forceConsistentCasingInFileNames": true,
-    "strict": true
+    "strict": true,
+    "removeComments": false,
   },
   "exclude": [
     "./bin/**/*"

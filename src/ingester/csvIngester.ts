@@ -4,28 +4,38 @@ import { Ingester, IngestionResult } from './ingester.js';
 
 const { prompt } = enquirer;
 
+type Delimiter = ','
+  | ';'
+  | '|'
+  | '\t';
+
 export interface CsvIngesterOptions {
-  delimiter: ',' | ';' | '|' | '\t';
+  delimiter: Delimiter;
+}
+
+async function promptDelimiter (acceptedValues: string[]): Promise<Delimiter> {
+  // @ts-ignore
+  const { delimiter } = await prompt({
+    type: 'input',
+    name: 'delimiter',
+    message: `Please provide the delimiter, accepted values: ${JSON.stringify(acceptedValues)}`,
+    validate (value: string): boolean | string {
+      return acceptedValues.includes(value)
+        ? true
+        : `The delimiter can only be one of: ${JSON.stringify(acceptedValues)}`;
+    },
+  });
+  return delimiter;
 }
 
 export const csvIngester: Ingester<CsvIngesterOptions> = {
   id: 'CSV',
+  displayName: 'CSV ingester',
+  startMessage: 'Ingesting CSV file',
   async init (initialOptions: Partial<CsvIngesterOptions>): Promise<CsvIngesterOptions> {
-    const acceptedValues = [ ',', ';', '|', '\t' ];
-    const optionsUpdater: CsvIngesterOptions = await prompt([
-      {
-        type: 'input',
-        name: 'delimiter',
-        skip: !!initialOptions.delimiter,
-        message: `Please provide the delimiter, accepted values: ${JSON.stringify(acceptedValues)}`,
-        validate (value: string): boolean | string {
-          const isValid = acceptedValues.includes(value);
-          return isValid ? true : `The delimiter can only be one of: ${JSON.stringify(acceptedValues)}`;
-        },
-      },
-    ]);
-
-    return { ...initialOptions, ...optionsUpdater };
+    const acceptedValues: Delimiter[] = [ ',', ';', '|', '\t' ];
+    const delimiter: Delimiter = initialOptions.delimiter || await promptDelimiter(acceptedValues);
+    return { delimiter };
   },
   async ingest (source: string, options: CsvIngesterOptions): Promise<IngestionResult> {
     const records: Record<string, any>[] = parse(source, {

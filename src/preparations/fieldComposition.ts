@@ -46,6 +46,7 @@ async function promptPattern (): Promise<string> {
 export const fieldCompositionPreparation: Preparation<FieldCompositionOptions> = {
   id: 'COMPOSITION',
   displayName: 'Compose a new field from other fields',
+  startMessage: 'Cooking preparation: field composition',
   serializeOptions (options: FieldCompositionOptions): Record<string, any> {
     return options;
   },
