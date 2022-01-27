@@ -8,7 +8,8 @@
   "scripts": {
     "lint": "eslint '**/*.js'",
     "snyk-protect": "snyk protect",
-    "prepare": "npm run snyk-protect"
+    "prepare": "npm run snyk-protect",
+    "test": "snyk test"
   },
   "repository": {
     "type": "git",
@@ -28,15 +29,15 @@
   },
   "homepage": "https://github.com/quilicicf/2ics",
   "dependencies": {
-    "snyk": "^1.683.0"
+    "snyk": "^1.839.0"
   },
   "devDependencies": {
-    "@talend/eslint-config": "3.0.0",
-    "eslint": "7.32.0",
-    "eslint-config-airbnb": "18.2.1",
-    "eslint-plugin-import": "2.24.0",
-    "eslint-plugin-jsx-a11y": "6.4.1",
-    "eslint-plugin-react": "7.24.0"
+    "@talend/eslint-config": "4.0.2",
+    "eslint": "8.7.0",
+    "eslint-config-airbnb": "19.0.4",
+    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-jsx-a11y": "6.5.1",
+    "eslint-plugin-react": "7.28.0"
   },
   "snyk": true
 }
