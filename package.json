@@ -7,7 +7,7 @@
   },
   "scripts": {
     "lint": "eslint '**/*.js'",
-    "snyk-protect": "snyk protect",
+    "snyk-protect": "snyk-protect",
     "prepare": "npm run snyk-protect",
     "test": "snyk test"
   },
@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/quilicicf/2ics",
   "dependencies": {
-    "snyk": "^1.839.0"
+    "@snyk/protect": "^1.839.0"
   },
   "devDependencies": {
     "@talend/eslint-config": "4.0.2",
