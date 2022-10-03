@@ -29,15 +29,15 @@
   },
   "homepage": "https://github.com/quilicicf/2ics",
   "dependencies": {
-    "@snyk/protect": "^1.839.0"
+    "@snyk/protect": "^1.1019.0"
   },
   "devDependencies": {
     "@talend/eslint-config": "4.0.2",
-    "eslint": "8.7.0",
+    "eslint": "8.24.0",
     "eslint-config-airbnb": "19.0.4",
-    "eslint-plugin-import": "2.25.4",
-    "eslint-plugin-jsx-a11y": "6.5.1",
-    "eslint-plugin-react": "7.28.0"
+    "eslint-plugin-import": "2.26.0",
+    "eslint-plugin-jsx-a11y": "6.6.1",
+    "eslint-plugin-react": "7.31.8"
   },
   "snyk": true
 }
