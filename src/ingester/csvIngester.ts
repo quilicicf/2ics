@@ -1,8 +1,7 @@
-import enquirer from 'enquirer';
-import parse from 'csv-parse/lib/sync.js';
-import { Ingester, IngestionResult } from './ingester.js';
+import { promptString } from '../dependencies/cliffy.ts';
+import { parseCsv } from '../dependencies/csv.ts';
 
-const { prompt } = enquirer;
+import { Ingester, IngestionResult } from './ingester.ts';
 
 type Delimiter = ','
   | ';'
@@ -14,18 +13,15 @@ export interface CsvIngesterOptions {
 }
 
 async function promptDelimiter (acceptedValues: string[]): Promise<Delimiter> {
-  // @ts-ignore
-  const { delimiter } = await prompt({
-    type: 'input',
-    name: 'delimiter',
+  return await promptString({
     message: `Please provide the delimiter, accepted values: ${JSON.stringify(acceptedValues)}`,
+    maxLength: 1,
     validate (value: string): boolean | string {
       return acceptedValues.includes(value)
         ? true
         : `The delimiter can only be one of: ${JSON.stringify(acceptedValues)}`;
     },
   });
-  return delimiter;
 }
 
 export const csvIngester: Ingester<CsvIngesterOptions> = {
@@ -38,7 +34,7 @@ export const csvIngester: Ingester<CsvIngesterOptions> = {
     return { delimiter };
   },
   async ingest (source: string, options: CsvIngesterOptions): Promise<IngestionResult> {
-    const records: Record<string, any>[] = parse(source, {
+    const records: Record<string, any>[] = parseCsv(source, {
       delimiter: options.delimiter,
 
       bom: true,
@@ -52,7 +48,7 @@ export const csvIngester: Ingester<CsvIngesterOptions> = {
     });
 
     const fields = Object.keys(records[ 0 ]);
-    process.stdout.write(`Found fields:\n  * ${fields.join('\n  * ')}\n`);
+    console.log(`Found fields:\n  * ${fields.join('\n  * ')}`);
     return { fields, records };
   },
 };

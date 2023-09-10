@@ -1,4 +1,4 @@
-import { Ingester, IngestionResult } from './ingester.js';
+import { Ingester, IngestionResult } from './ingester.ts';
 
 export interface JsonIngesterOptions {}
 
@@ -12,7 +12,7 @@ export const jsonIngester: Ingester<JsonIngesterOptions> = {
   async ingest (source: string): Promise<IngestionResult> {
     const records: Record<string, any>[] = JSON.parse(source);
     const fields = Object.keys(records[ 0 ]);
-    process.stdout.write(`Found fields:\n  * ${fields.join('\n  * ')}\n`);
+    console.log(`Found fields:\n  * ${fields.join('\n  * ')}`);
     return { fields, records };
   },
 };

@@ -1,12 +1,8 @@
-import yargs from 'yargs';
-import chalk from 'chalk';
-import { existsSync, readFileSync, statSync } from 'fs';
+import { yargs } from './dependencies/yargs.ts';
+import { stoyle, stoyleGlobal, theme } from './dependencies/stoyle.ts';
+import { exists } from './dependencies/fs.ts';
 
-import { CliOptions, cook } from './cook.js';
-
-const { red, bold } = chalk;
-
-const [ , bin, ...args ] = process.argv;
+import { CliOptions, cook } from './cook.ts';
 
 interface RawCliOptions {
   source: string;
@@ -18,32 +14,31 @@ interface RawCliOptions {
 const USE_RECIPE_OPTION = 'use-recipe';
 const WRITE_RECIPE_OPTION = 'write-recipe';
 
-export async function run () {
-  // @ts-ignore TODO: can it be done better with Yargs API?
-  const rawOptions: RawCliOptions = yargs(args)
-    .usage(`USAGE: ${bin} \\\n\t--source /tmp/input.csv \\\n\t--output /tmp/output.ics \\\n\t--write-recipe /tmp/recipe.json`)
+export async function run (): Promise<void> {
+  const rawOptions: RawCliOptions = await yargs
+    .usage(`USAGE: 2ics \\\n\t--source /tmp/input.csv \\\n\t--output /tmp/output.ics \\\n\t--write-recipe /tmp/recipe.json`)
     .option('source', { // TODO: no positional at top-level?
       alias: 's',
       type: 'string',
-      description: 'The path to the source file',
+      describe: 'The path to the source file',
       requiresArg: true,
       demandOption: true,
-      coerce (filePath: string): string {
-        if (!existsSync(filePath)) {
-          throw Error(red(`The source file was not found`));
+      async coerce (filePath: string): Promise<string> {
+        if (!(await exists(filePath))) {
+          throw Error(stoyleGlobal`The source file was not found`(theme.error));
         }
-        return readFileSync(filePath, 'utf8');
+        return Deno.readTextFile(filePath);
       },
     })
     .option('output', {
       alias: 'o',
       type: 'string',
-      description: 'The path where to where the *.ics file will be written',
+      describe: 'The path where to where the *.ics file will be written',
       requiresArg: true,
       demandOption: true,
-      coerce (filePath: string): string {
-        if (existsSync(filePath) && statSync(filePath).isDirectory()) {
-          throw Error(red(`The output path leads to a folder, should be a file`));
+      async coerce (filePath: string): Promise<string> {
+        if (await exists(filePath) && (await Deno.stat(filePath)).isDirectory) {
+          throw Error(stoyleGlobal`The output path leads to a folder, should be a file`(theme.error));
         }
         return filePath;
       },
@@ -51,32 +46,36 @@ export async function run () {
     .option(USE_RECIPE_OPTION, {
       alias: 'r',
       type: 'string',
-      description: `The path to a recipe that will be cooked. Mutually exclusive with ${bold(WRITE_RECIPE_OPTION)}`,
+      describe: stoyle`The path to a recipe that will be cooked. Mutually exclusive with ${WRITE_RECIPE_OPTION}`(
+        { nodes: [ theme.emphasis ] },
+      ),
       requiresArg: true,
       demandOption: false,
-      conflicts: 'preparations',
-      coerce (filePath: string) {
+      conflicts: [ 'preparations' ],
+      async coerce (filePath: string) {
         if (!filePath) { return undefined; }
 
-        if (!existsSync(filePath)) {
-          throw Error(red(`Could not find the recipe`));
+        if (!(await exists(filePath))) {
+          throw Error(stoyle`Could not find the recipe`({ nodes: [ theme.error ] }));
         }
 
-        return readFileSync(filePath, 'utf8');
+        return Deno.readTextFile(filePath);
       },
     })
     .option(WRITE_RECIPE_OPTION, {
       alias: 'w',
       type: 'string',
-      description: `Write the recipe to the given path to reproduce it with ${bold(USE_RECIPE_OPTION)} later. Mutually exclusive with ${bold(WRITE_RECIPE_OPTION)}`,
+      describe: stoyle`Write the recipe to the given path to reproduce it with ${USE_RECIPE_OPTION} later. Mutually exclusive with ${WRITE_RECIPE_OPTION}`(
+        { nodes: [ theme.emphasis, theme.emphasis ] },
+      ),
       requiresArg: true,
       demandOption: false,
-      conflicts: USE_RECIPE_OPTION,
-      coerce (filePath: string) {
+      conflicts: [ USE_RECIPE_OPTION ],
+      async coerce (filePath: string) {
         if (!filePath) { return undefined; }
 
-        if (existsSync(filePath) && statSync(filePath).isDirectory()) {
-          throw Error(red(`Cannot write the recipe, ${filePath} is a directory`));
+        if (await exists(filePath) && (await Deno.stat(filePath)).isDirectory) {
+          throw Error(stoyle`Cannot write the recipe, ${filePath} is a directory`({ nodes: [ theme.emphasis ] }));
         }
 
         return filePath;
@@ -84,7 +83,7 @@ export async function run () {
     })
     .help()
     .wrap(null)
-    .argv;
+    .parse(Deno.args) as RawCliOptions;
 
   const options: CliOptions = {
     source: rawOptions.source,
@@ -94,5 +93,5 @@ export async function run () {
   };
 
   await cook(options)
-    .catch(error => process.stderr.write(`Error while cooking:\n${error.stack}\n`));
+    .catch((error) => console.error(stoyleGlobal`Error while cooking:\n${error.stack}`(theme.error)));
 }

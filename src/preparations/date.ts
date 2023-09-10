@@ -1,8 +1,7 @@
-import enquirer from 'enquirer';
-import { addDays, addHours, addMinutes, parse } from 'date-fns';
-import { Preparation, PreparationInitResult } from './preparation.js';
+import { addDays, addHours, addMinutes, parse } from '../dependencies/datefns.ts';
+import { promptNumber, promptSelect, promptString } from '../dependencies/cliffy.ts';
 
-const { prompt } = enquirer;
+import { Preparation, PreparationInitResult } from './preparation.ts';
 
 export interface ParseDateOptions {
   field: string;
@@ -19,24 +18,18 @@ function parseDate (record: Record<string, any>, options: ParseDateOptions): Rec
 }
 
 async function promptField (fields: string[]): Promise<string> {
-  // @ts-ignore
-  const { field } = await prompt({
-    type: 'autocomplete',
-    name: 'field',
+  return await promptSelect({
     message: 'Please provide the name of the field with the date inside',
-    choices: [ ...fields ],
+    options: [ ...fields ],
+    maxRows: 10,
+    search: true,
   });
-  return field;
 }
 
 async function promptFormat (): Promise<string> {
-  // @ts-ignore
-  const { format } = await prompt({
-    type: 'input',
-    name: 'format',
+  return await promptString({
     message: 'Please provide the date format',
   });
-  return format;
 }
 
 export const parseDatePreparation: Preparation<ParseDateOptions> = {
@@ -49,14 +42,16 @@ export const parseDatePreparation: Preparation<ParseDateOptions> = {
   deserializeOptions (options: Record<string, any>): ParseDateOptions {
     return options as ParseDateOptions;
   },
-  async init (initialOptions: Partial<ParseDateOptions>, fields: string[]): Promise<PreparationInitResult<ParseDateOptions>> {
+  async init (initialOptions: Partial<ParseDateOptions>, fields: string[])
+    : Promise<PreparationInitResult<ParseDateOptions>> {
+
     const field: string = initialOptions.field || await promptField(fields);
     const format: string = initialOptions.format || await promptFormat();
 
     return { fields, options: { field, format } };
   },
   cook (records: Record<string, any>[], options: ParseDateOptions): Record<string, any>[] {
-    return records.map(record => parseDate(record, options));
+    return records.map((record) => parseDate(record, options));
   },
 };
 
@@ -70,10 +65,7 @@ export interface AddTimeOptions {
 }
 
 async function promptNewField (fields: string[]): Promise<string> {
-  // @ts-ignore
-  const { newField } = await prompt({
-    type: 'input',
-    name: 'newField',
+  return await promptString({
     message: 'Please provide the name of the field with updated date',
     validate (value: string): boolean | string {
       return fields.includes(value)
@@ -81,25 +73,19 @@ async function promptNewField (fields: string[]): Promise<string> {
         : true;
     },
   });
-  return newField;
 }
 
 async function promptUnit (): Promise<TimeUnit> {
-  // @ts-ignore
-  const { unit } = await prompt({
-    type: 'autocomplete',
-    name: 'unit',
+  return await promptSelect({
     message: 'Please provide the time unit',
-    choices: [ 'DAYS', 'HOURS', 'MINUTES' ],
+    options: [ 'DAYS', 'HOURS', 'MINUTES' ],
+    maxRows: 10,
+    search: true,
   });
-  return unit;
 }
 
 async function promptAmount (): Promise<number> {
-  // @ts-ignore
-  const { amount } = await prompt({
-    type: 'numeral',
-    name: 'amount',
+  return await promptNumber({
     message: 'Please provide the time amount',
     required: true,
     validate (input: string): string | boolean {
@@ -109,7 +95,6 @@ async function promptAmount (): Promise<number> {
       return true;
     },
   });
-  return amount;
 }
 
 function addTime (date: Date, options: AddTimeOptions): Date {
@@ -120,6 +105,8 @@ function addTime (date: Date, options: AddTimeOptions): Date {
       return addHours(date, options.amount);
     case 'MINUTES':
       return addMinutes(date, options.amount);
+    default:
+      throw Error(`No such time unit ${options.unit}`);
   }
 }
 
@@ -141,7 +128,9 @@ export const addTimePreparation: Preparation<AddTimeOptions> = {
   deserializeOptions (options: Record<string, any>): AddTimeOptions {
     return options as AddTimeOptions;
   },
-  async init (initialOptions: Partial<AddTimeOptions>, fields: string[]): Promise<PreparationInitResult<AddTimeOptions>> {
+  async init (initialOptions: Partial<AddTimeOptions>, fields: string[])
+    : Promise<PreparationInitResult<AddTimeOptions>> {
+
     const field: string = initialOptions.field || await promptField(fields);
     const newField: string = initialOptions.newField || await promptNewField(fields);
     const unit: TimeUnit = initialOptions.unit || await promptUnit();
@@ -149,10 +138,12 @@ export const addTimePreparation: Preparation<AddTimeOptions> = {
 
     return {
       fields: [ ...fields, newField ],
-      options: { field, newField, unit, amount },
+      options: {
+        field, newField, unit, amount,
+      },
     };
   },
   cook (records: Record<string, any>[], options: AddTimeOptions): Record<string, any>[] {
-    return records.map(record => addTimeToRecord(record, options));
+    return records.map((record) => addTimeToRecord(record, options));
   },
 };

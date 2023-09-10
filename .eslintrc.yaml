@@ -1,2 +1,0 @@
-extends: '@talend/eslint-config/api-packaging.yaml'
-root: true

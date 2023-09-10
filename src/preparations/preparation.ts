@@ -1,7 +1,7 @@
-import { addTimePreparation, parseDatePreparation } from './date.js';
-import { fieldCompositionPreparation } from './fieldComposition.js';
-import { filterPreparation, invertedFilterPreparation } from './filter.js';
-import { toIcalPreparation } from './toIcal.js';
+import { addTimePreparation, parseDatePreparation } from './date.ts';
+import { fieldCompositionPreparation } from './fieldComposition.ts';
+import { filterPreparation, invertedFilterPreparation } from './filter.ts';
+import { toIcalPreparation } from './toIcal.ts';
 
 export interface PreparationInitResult<O extends Record<string, any>> {
   fields: string[];
@@ -12,9 +12,13 @@ export interface Preparation<O extends Record<string, any>> {
   id: string;
   displayName: string;
   startMessage: string,
+  // eslint-disable-next-line no-unused-vars
   serializeOptions: (options: O) => Record<string, any>;
+  // eslint-disable-next-line no-unused-vars
   deserializeOptions: (options: Record<string, any>) => O;
+  // eslint-disable-next-line no-unused-vars
   init: (options: O, fields: string[]) => Promise<PreparationInitResult<O>>;
+  // eslint-disable-next-line no-unused-vars
   cook: (records: Record<string, any>[], options: O) => Record<string, any>[];
 }
 

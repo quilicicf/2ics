@@ -1,7 +1,5 @@
-import enquirer from 'enquirer';
-import { Preparation, PreparationInitResult } from './preparation.js';
-
-const { prompt } = enquirer;
+import { Preparation, PreparationInitResult } from './preparation.ts';
+import { promptString } from '../dependencies/cliffy.ts';
 
 export interface FieldCompositionOptions {
   composedFieldName: string;
@@ -11,18 +9,13 @@ export interface FieldCompositionOptions {
 function resolvePattern (record: Record<string, any>, pattern: string): string {
   return Object.keys(record)
     .reduce(
-      (currentValue: string, key: string) => {
-        return currentValue.replaceAll(`%{${key}}`, record[ key ]);
-      },
+      (currentValue: string, key: string) => currentValue.replaceAll(`%{${key}}`, record[ key ]),
       pattern,
     );
 }
 
 async function promptComposedFieldName (fields: string[]): Promise<string> {
-  // @ts-ignore
-  const { composedFieldName } = await prompt({
-    type: 'input',
-    name: 'composedFieldName',
+  return await promptString({
     message: 'Please provide the name of the future composed field',
     validate (value: string): boolean | string {
       return fields.includes(value)
@@ -30,17 +23,12 @@ async function promptComposedFieldName (fields: string[]): Promise<string> {
         : true;
     },
   });
-  return composedFieldName;
 }
 
 async function promptPattern (): Promise<string> {
-  // @ts-ignore
-  const { pattern } = await prompt({
-    type: 'input',
-    name: 'pattern',
+  return await promptString({
     message: 'Please provide the pattern. Use record fields like this: %{fieldName}',
   });
-  return pattern;
 }
 
 export const fieldCompositionPreparation: Preparation<FieldCompositionOptions> = {
@@ -53,7 +41,9 @@ export const fieldCompositionPreparation: Preparation<FieldCompositionOptions> =
   deserializeOptions (options: Record<string, any>): FieldCompositionOptions {
     return options as FieldCompositionOptions;
   },
-  async init (initialOptions: Partial<FieldCompositionOptions>, fields: string[]): Promise<PreparationInitResult<FieldCompositionOptions>> {
+  async init (initialOptions: Partial<FieldCompositionOptions>, fields: string[])
+    : Promise<PreparationInitResult<FieldCompositionOptions>> {
+
     const composedFieldName: string = initialOptions.composedFieldName || await promptComposedFieldName(fields);
     const pattern: string = initialOptions.pattern || await promptPattern();
 
@@ -63,7 +53,7 @@ export const fieldCompositionPreparation: Preparation<FieldCompositionOptions> =
     };
   },
   cook (records: Record<string, any>[], options: FieldCompositionOptions): Record<string, any>[] {
-    return records.map(record => ({
+    return records.map((record) => ({
       ...record,
       [ options.composedFieldName ]: resolvePattern(record, options.pattern),
     }));

@@ -1,5 +1,5 @@
-import { csvIngester } from './csvIngester.js';
-import { jsonIngester } from './jsonIngester.js';
+import { csvIngester } from './csvIngester.ts';
+import { jsonIngester } from './jsonIngester.ts';
 
 export interface IngestionResult {
   fields: string[];

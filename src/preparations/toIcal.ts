@@ -1,7 +1,5 @@
-import enquirer from 'enquirer';
-import { Preparation, PreparationInitResult } from './preparation.js';
-
-const { prompt } = enquirer;
+import { Preparation, PreparationInitResult } from './preparation.ts';
+import { promptSelect } from '../dependencies/cliffy.ts';
 
 const SKIP_VALUE = 'SKIP_THIS_FIELD';
 
@@ -31,15 +29,12 @@ function mapToIcal (record: Record<string, any>, options: ToIcalOptions): Record
 }
 
 async function promptField (fieldName: string, choices: Choice[]): Promise<string> {
-  // @ts-ignore
-  const { result } = await prompt({
-    type: 'autocomplete',
-    name: 'result',
+  return await promptSelect({
     message: `In which field is the ${fieldName} of the event?`,
     choices,
+    maxRows: 10,
+    search: true,
   });
-
-  return result;
 }
 
 export const toIcalPreparation: Preparation<ToIcalOptions> = {
@@ -53,7 +48,7 @@ export const toIcalPreparation: Preparation<ToIcalOptions> = {
     return options as ToIcalOptions;
   },
   async init (initialOptions: Partial<ToIcalOptions>, fields: string[]): Promise<PreparationInitResult<ToIcalOptions>> {
-    const mandatoryFieldChoices: Choice[] = fields.map(field => ({ name: field, value: field }));
+    const mandatoryFieldChoices: Choice[] = fields.map((field) => ({ name: field, value: field }));
     const optionalFieldChoices: Choice[] = [
       { name: 'Skip this field', value: SKIP_VALUE },
       ...mandatoryFieldChoices,
@@ -66,9 +61,14 @@ export const toIcalPreparation: Preparation<ToIcalOptions> = {
     const location: string = initialOptions.location || await promptField('location', optionalFieldChoices);
     const description: string = initialOptions.description || await promptField('description', optionalFieldChoices);
 
-    return { fields, options: { summary, dtstart, dtend, location, description } };
+    return {
+      fields,
+      options: {
+        summary, dtstart, dtend, location, description,
+      },
+    };
   },
   cook (records: Record<string, any>[], options: ToIcalOptions): Record<string, any>[] {
-    return records.map(record => mapToIcal(record, options));
+    return records.map((record) => mapToIcal(record, options));
   },
 };

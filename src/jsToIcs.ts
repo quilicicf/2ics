@@ -1,8 +1,5 @@
-import { EOL } from 'os';
-import dateFnsTz from 'date-fns-tz';
-import { format } from 'date-fns';
-
-const { utcToZonedTime } = dateFnsTz;
+import { EOL } from './dependencies/fs.ts';
+import { formatDate, utcToZonedTime } from './dependencies/datefns.ts';
 
 const TZ = Intl.DateTimeFormat()
   .resolvedOptions()
@@ -10,7 +7,7 @@ const TZ = Intl.DateTimeFormat()
 
 function toZonedIcalTime (date: Date): string {
   const zoned = utcToZonedTime(date, TZ);
-  return format(zoned, `yyyyMMdd'T'HHmmss`);
+  return formatDate(zoned, 'yyyyMMdd\'T\'HHmmss');
 }
 
 const CALENDAR_HEADER = `BEGIN:VCALENDAR${EOL}VERSION:2.0${EOL}`;
@@ -31,13 +28,13 @@ function toIcsEvent (record: Record<string, any>): string {
     computeSummary(record.summary),
     computeStart(record.dtstart),
     computeEnd(record.dtend),
-    ...(!!record.location ? [ computeLocation(record.location) ] : []),
-    ...(!!record.description ? [ computeDescription(record.description) ] : []),
+    ...(record.location ? [ computeLocation(record.location) ] : []),
+    ...(record.description ? [ computeDescription(record.description) ] : []),
     EVENT_FOOTER,
   ].join(EOL);
 }
 
-export function jsToIcs (records: Record<string, any>): string {
+export default function jsToIcs (records: Record<string, any>): string {
   return [
     CALENDAR_HEADER,
     ...records.map((record: Record<string, any>) => toIcsEvent(record)),

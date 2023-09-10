@@ -1,7 +1,6 @@
-import enquirer from 'enquirer';
-import { Preparation, PreparationInitResult } from './preparation.js';
+import { promptList, promptString } from '../dependencies/cliffy.ts';
 
-const { prompt } = enquirer;
+import { Preparation, PreparationInitResult } from './preparation.ts';
 
 export interface FilterOptions {
   regex: RegExp;
@@ -9,16 +8,12 @@ export interface FilterOptions {
 }
 
 async function promptRegex (): Promise<RegExp> {
-  // @ts-ignore
-  const { regex: regexAsString } = await prompt({
-    type: 'input',
-    name: 'regex',
+  const regexAsString = await promptString({
     message: 'Provide the regex to look for',
-    validate (value) {
+    validate (value: string) {
       try {
-        new RegExp(value);
-        return true;
-      } catch (error) {
+        return !!new RegExp(value);
+      } catch (_) {
         return 'Invalid regex';
       }
     },
@@ -27,17 +22,17 @@ async function promptRegex (): Promise<RegExp> {
 }
 
 async function promptFields (fields: string[]): Promise<string[]> {
-  // @ts-ignore
-  const { fieldsToInspect } = await prompt({
-    type: 'multiselect',
-    name: 'fieldsToInspect',
+  return await promptList({
     message: 'Which fields should match the regex to validate the filter? (logical OR)',
-    choices: fields,
+    suggestions: fields,
+    minTags: 1,
+    info: true,
   });
-  return fieldsToInspect;
 }
 
-async function init (initialOptions: Partial<FilterOptions>, fields: string[]): Promise<PreparationInitResult<FilterOptions>> {
+async function init (initialOptions: Partial<FilterOptions>, fields: string[])
+  : Promise<PreparationInitResult<FilterOptions>> {
+
   const regex = initialOptions.regex || await promptRegex();
   const fieldsToInspect = initialOptions.fieldsToInspect || await promptFields([ ...fields ]);
 
@@ -46,7 +41,7 @@ async function init (initialOptions: Partial<FilterOptions>, fields: string[]): 
 
 function filter (options: FilterOptions, record: Record<string, any>): boolean {
   return options.fieldsToInspect
-    .some(field => options.regex.test(record[ field ]));
+    .some((field) => options.regex.test(record[ field ]));
 }
 
 function serializeOptions (options: FilterOptions): Record<string, any> {
@@ -71,7 +66,7 @@ export const filterPreparation: Preparation<FilterOptions> = {
   deserializeOptions,
   init,
   cook (records: Record<string, any>[], options: FilterOptions): Record<string, any>[] {
-    return records.filter(record => filter(options, record));
+    return records.filter((record) => filter(options, record));
   },
 };
 
@@ -83,6 +78,6 @@ export const invertedFilterPreparation: Preparation<FilterOptions> = {
   deserializeOptions,
   init,
   cook (records: Record<string, any>[], options: FilterOptions): Record<string, any>[] {
-    return records.filter(record => !filter(options, record));
+    return records.filter((record) => !filter(options, record));
   },
 };
