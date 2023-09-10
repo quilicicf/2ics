@@ -30,16 +30,15 @@ interface Accu {
 }
 
 interface Choice {
-  name: string;
-  message?: string,
-  value?: string;
+  value: string;
+  name?: string,
 }
 
 const DONE = 'DONE';
 
 const STOP_CHOICE = {
-  name: DONE,
-  message: 'I\'m done, let\'s map that to ical',
+  value: DONE,
+  name: 'I\'m done, let\'s map that to ical',
 };
 
 const PREPARATION_CHOICES: Choice[] = [

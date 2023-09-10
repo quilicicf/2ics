@@ -21,7 +21,7 @@ async function promptDelimiter (acceptedValues: string[]): Promise<Delimiter> {
         ? true
         : `The delimiter can only be one of: ${JSON.stringify(acceptedValues)}`;
     },
-  });
+  }) as Delimiter;
 }
 
 export const csvIngester: Ingester<CsvIngesterOptions> = {
@@ -33,7 +33,7 @@ export const csvIngester: Ingester<CsvIngesterOptions> = {
     const delimiter: Delimiter = initialOptions.delimiter || await promptDelimiter(acceptedValues);
     return { delimiter };
   },
-  async ingest (source: string, options: CsvIngesterOptions): Promise<IngestionResult> {
+  ingest (source: string, options: CsvIngesterOptions): Promise<IngestionResult> {
     const records: Record<string, any>[] = parseCsv(source, {
       delimiter: options.delimiter,
 
@@ -49,6 +49,6 @@ export const csvIngester: Ingester<CsvIngesterOptions> = {
 
     const fields = Object.keys(records[ 0 ]);
     console.log(`Found fields:\n  * ${fields.join('\n  * ')}`);
-    return { fields, records };
+    return Promise.resolve({ fields, records });
   },
 };
